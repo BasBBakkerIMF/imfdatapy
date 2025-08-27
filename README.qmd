@@ -1,0 +1,146 @@
+---
+title: "imdatapy"
+format:
+  html:
+    toc: false
+    code-copy: true
+    df-print: paged
+  gfm:
+    df-print: kable
+    code-copy: true
+    anchor-sections: true
+execute:
+  echo: true
+  warning: false
+  message: false
+  cache: false
+freeze: auto
+jupyter: python3
+---
+
+
+
+## Overview
+
+This guide shows how to use `DataInquiry` from **imfdatapy** to:
+
+- list SDMX dataflows (datasets),
+- explore a dataset’s dimensions and codelists,
+- build a valid SDMX key with `make_key_str`,
+- retrieve time-series data.
+
+### Authentication
+
+- `auth=False`: no auth headers (public datasets like WEO).
+- `auth=True`: MSAL authentication (for protected datasets like BBGDL).
+
+
+## Install
+
+```{python}
+# If you don't have imfidata yet run the following from a command line
+# pip install git+https://github.com/BasBBakkerIMF/imfdatapy.git
+```
+
+## Imports
+
+```{python}
+from imfdatapy import DataInquiry, make_key_str
+```
+
+## 1) List datasets (no dataset context needed)
+
+```{python}
+# Public dataflows (no auth)
+all_flows = DataInquiry.datasets(auth=False)
+all_flows
+```
+
+
+# Dataflows with auth (if your account grants access to more)
+```{python}
+all_flows = DataInquiry.datasets(auth=True)
+all_flows
+```
+
+## 2) WEO (public)
+
+Create a client for the `"WEO"` dataset (no auth needed).
+
+```{python}
+weo = DataInquiry(dataset="WEO", auth=False)
+```
+
+### Dimensions and a convenient env
+
+```{python}
+# Dimensions
+dim_df = weo.dimension_names
+print(dim_df)
+```
+```{python}
+# Build a dot-accessible env mapping Dimension -> Codelist id
+dim_env = weo.dimension_env()
+```
+
+### Explore codelists (countries, indicators, frequency)
+
+```{python}
+countries_df, countries  = weo.codelist(dim_env.COUNTRY)
+indicators_df, indicators = weo.codelist(dim_env.INDICATOR)
+frequency_df, frequency   = weo.codelist(dim_env.FREQUENCY)
+
+countries_df.head(), indicators_df.head(), frequency_df.head()
+```
+
+### Build a key and fetch data
+
+```{python}
+key = [
+    [countries.United_States, countries.Netherlands_The],
+    [indicators.Unemployment_rate],
+    [frequency.Annual],
+]
+keystr = make_key_str(key)
+weo_data = weo.get_data(key=keystr,  convert_dates=True)
+print(weo_data.tail())
+```
+
+### Codelists summary and a (possibly) protected codelist
+
+```{python}
+# Summary of all codelists in WEO
+codelists = weo.codelists_summary
+codelists.tail()
+```
+
+```{python}
+cl_df, cl_env = weo.codelist("CL_SEX")
+cl_df.head()
+```
+
+## 3) Bloomberg (protected dataset)
+
+Instantiate with `auth=True` to attach MSAL auth headers.
+
+```{python}
+bbg = DataInquiry(dataset="BBGDL", auth=True)
+bbg_dim_env = bbg.dimension_env()
+
+tickers_df, tickers     = bbg.codelist(bbg_dim_env.TICKER)
+fields_df, fields       = bbg.codelist(bbg_dim_env.FIELD)
+frequency_df, frequency = bbg.codelist(bbg_dim_env.FREQUENCY)
+
+bbg_key = [
+     [tickers.ALBANIAN_LEK_SPOT],
+     [fields.Ask_Price, fields.Bid_Price],
+     [frequency.Daily],
+]
+bbg_data = bbg.get_data(key=make_key_str(bbg_key), convert_dates=False)
+print(bbg_data.tail())
+```
+
+
+
+```
+```

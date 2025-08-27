@@ -1,0 +1,186 @@
+ Volume in drive C is Windows
+ Volume Serial Number is CAFF-5D64
+
+ Directory of C:\imfdatapy
+
+08/27/2025  05:01 PM    <DIR>          .
+08/27/2025  04:41 PM             4,895 .gitignore
+08/27/2025  05:01 PM                 0 dirs.txt
+08/27/2025  04:41 PM             1,091 LICENSE
+08/27/2025  04:50 PM             1,008 pyproject.toml
+08/27/2025  04:41 PM                42 README.md
+08/27/2025  04:52 PM    <DIR>          src
+               5 File(s)          7,036 bytes
+
+ Directory of C:\imfdatapy\.git
+
+08/27/2025  05:01 PM    <DIR>          ..
+08/27/2025  04:44 PM               338 config
+08/27/2025  04:40 PM                73 description
+08/27/2025  04:41 PM                21 HEAD
+08/27/2025  04:40 PM    <DIR>          hooks
+08/27/2025  04:41 PM               289 index
+08/27/2025  04:40 PM    <DIR>          info
+08/27/2025  04:41 PM    <DIR>          logs
+08/27/2025  04:41 PM    <DIR>          objects
+08/27/2025  04:41 PM               112 packed-refs
+08/27/2025  04:41 PM    <DIR>          refs
+               5 File(s)            833 bytes
+
+ Directory of C:\imfdatapy\.git\hooks
+
+08/27/2025  04:40 PM    <DIR>          .
+08/27/2025  04:40 PM               478 applypatch-msg.sample
+08/27/2025  04:40 PM               896 commit-msg.sample
+08/27/2025  04:40 PM             4,726 fsmonitor-watchman.sample
+08/27/2025  04:40 PM               189 post-update.sample
+08/27/2025  04:40 PM               424 pre-applypatch.sample
+08/27/2025  04:40 PM             1,649 pre-commit.sample
+08/27/2025  04:40 PM               416 pre-merge-commit.sample
+08/27/2025  04:40 PM             1,374 pre-push.sample
+08/27/2025  04:40 PM             4,898 pre-rebase.sample
+08/27/2025  04:40 PM               544 pre-receive.sample
+08/27/2025  04:40 PM             1,492 prepare-commit-msg.sample
+08/27/2025  04:40 PM             2,783 push-to-checkout.sample
+08/27/2025  04:40 PM             2,308 sendemail-validate.sample
+08/27/2025  04:40 PM             3,650 update.sample
+              14 File(s)         25,827 bytes
+
+ Directory of C:\imfdatapy\.git\info
+
+08/27/2025  04:40 PM    <DIR>          .
+08/27/2025  04:40 PM               240 exclude
+               1 File(s)            240 bytes
+
+ Directory of C:\imfdatapy\.git\logs
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM               187 HEAD
+08/27/2025  04:41 PM    <DIR>          refs
+               1 File(s)            187 bytes
+
+ Directory of C:\imfdatapy\.git\logs\refs
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM    <DIR>          heads
+08/27/2025  04:41 PM    <DIR>          remotes
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\.git\logs\refs\heads
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM               187 main
+               1 File(s)            187 bytes
+
+ Directory of C:\imfdatapy\.git\logs\refs\remotes
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM    <DIR>          origin
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\.git\logs\refs\remotes\origin
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM               187 HEAD
+               1 File(s)            187 bytes
+
+ Directory of C:\imfdatapy\.git\objects
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          info
+08/27/2025  04:41 PM    <DIR>          pack
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\.git\objects\info
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\.git\objects\pack
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM             1,212 pack-e41a57bc54f51eab1430279eb1937776717248a7.idx
+08/27/2025  04:41 PM             3,558 pack-e41a57bc54f51eab1430279eb1937776717248a7.pack
+08/27/2025  04:41 PM                72 pack-e41a57bc54f51eab1430279eb1937776717248a7.rev
+               3 File(s)          4,842 bytes
+
+ Directory of C:\imfdatapy\.git\refs
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          heads
+08/27/2025  04:41 PM    <DIR>          remotes
+08/27/2025  04:41 PM    <DIR>          tags
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\.git\refs\heads
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM                41 main
+               1 File(s)             41 bytes
+
+ Directory of C:\imfdatapy\.git\refs\remotes
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM    <DIR>          origin
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\.git\refs\remotes\origin
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+08/27/2025  04:41 PM                30 HEAD
+               1 File(s)             30 bytes
+
+ Directory of C:\imfdatapy\.git\refs\tags
+
+08/27/2025  04:41 PM    <DIR>          .
+08/27/2025  04:41 PM    <DIR>          ..
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\src
+
+08/27/2025  04:52 PM    <DIR>          .
+08/27/2025  05:01 PM    <DIR>          ..
+08/27/2025  04:55 PM    <DIR>          imfdatapy
+08/27/2025  04:52 PM    <DIR>          imfdatapy.egg-info
+               0 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\src\imfdatapy
+
+08/27/2025  04:55 PM    <DIR>          .
+08/27/2025  04:52 PM    <DIR>          ..
+08/27/2025  04:46 PM                 0 data_inquiry.py
+08/27/2025  04:47 PM                 0 py.typed
+08/27/2025  04:44 PM                 0 __init__.py
+08/27/2025  04:55 PM    <DIR>          __pycache__
+               3 File(s)              0 bytes
+
+ Directory of C:\imfdatapy\src\imfdatapy\__pycache__
+
+08/27/2025  04:55 PM    <DIR>          .
+08/27/2025  04:55 PM    <DIR>          ..
+08/27/2025  04:55 PM               147 __init__.cpython-311.pyc
+               1 File(s)            147 bytes
+
+ Directory of C:\imfdatapy\src\imfdatapy.egg-info
+
+08/27/2025  04:52 PM    <DIR>          .
+08/27/2025  04:52 PM    <DIR>          ..
+08/27/2025  04:52 PM                 1 dependency_links.txt
+08/27/2025  04:52 PM               899 PKG-INFO
+08/27/2025  04:52 PM                18 requires.txt
+08/27/2025  04:52 PM               295 SOURCES.txt
+08/27/2025  04:52 PM                10 top_level.txt
+               5 File(s)          1,223 bytes
+
+     Total Files Listed:
+              42 File(s)         40,780 bytes
+              54 Dir(s)  22,092,247,040 bytes free
