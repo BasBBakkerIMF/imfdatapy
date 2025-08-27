@@ -1,5 +1,5 @@
 ---
-title: "imdatapy"
+title: "imfdatapy"
 format:
   html:
     toc: false
@@ -24,9 +24,9 @@ jupyter: python3
 
 This guide shows how to use `DataInquiry` from **imfdatapy** to:
 
-- list SDMX dataflows (datasets),
+- list availabe datasets,
 - explore a dataset’s dimensions and codelists,
-- build a valid SDMX key with `make_key_str`,
+- build a valid key to get data,
 - retrieve time-series data.
 
 ### Authentication

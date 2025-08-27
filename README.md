@@ -1,12 +1,12 @@
-# imdatapy
+# imfdatapy
 
 ## Overview
 
 This guide shows how to use `DataInquiry` from **imfdatapy** to:
 
-- list SDMX dataflows (datasets),
+- list availabe datasets,
 - explore a dataset’s dimensions and codelists,
-- build a valid SDMX key with `make_key_str`,
+- build a valid key to get data,
 - retrieve time-series data.
 
 ### Authentication
@@ -35,17 +35,17 @@ all_flows = DataInquiry.datasets(auth=False)
 all_flows
 ```
 
-    AFRREO     Sub-Saharan Africa Regional Economic Outlook (...
-    MFS_ODC    Monetary and Financial Statistics (MFS), Other...
-    PIP        Portfolio Investment Positions by Counterpart ...
-    HPD                             Historical Public Debt (HPD)
-    APDREO     Asia and Pacific Regional Economic Outlook (AP...
-                                     ...                        
-    DIP        Direct Investment Positions by Counterpart Eco...
-    SRD                         Structural Reform Database (SRD)
-    BOP                                Balance of Payments (BOP)
-    QGFS          Quarterly Government Finance Statistics (QGFS)
-    PI                                   Production Indexes (PI)
+    AFRREO                 Sub-Saharan Africa Regional Economic Outlook (...
+    HPD                                         Historical Public Debt (HPD)
+    PI                                               Production Indexes (PI)
+    APDREO                 Asia and Pacific Regional Economic Outlook (AP...
+    MFS_ODC                Monetary and Financial Statistics (MFS), Other...
+                                                 ...                        
+    FSIC                   Financial Soundness Indicators (FSI), Core and...
+    ANEA                       National Economic Accounts (NEA), Annual Data
+    ISORA_2018_DATA_PUB                                      ISORA 2018 Data
+    FM                                                   Fiscal Monitor (FM)
+    GFS_COFOG                        GFS Government Expenditures by Function
     Length: 68, dtype: object
 
 # Dataflows with auth (if your account grants access to more)
@@ -55,17 +55,17 @@ all_flows = DataInquiry.datasets(auth=True)
 all_flows
 ```
 
-    GPI                                                    Government Policy Indicators (GPI)
-    AFRREO                                  Sub-Saharan Africa Regional Economic Outlook (...
-    FSI                                                          Financial Stress Index (FSI)
-    MFS_ODC                                 Monetary and Financial Statistics (MFS), Other...
-    GDS                                                              Global Data Source (GDS)
-                                                                  ...                        
-    MFS_FMP                                 Monetary and Financial Statistics (MFS): Finan...
-    DIP                                     Direct Investment Positions by Counterpart Eco...
-    SRD                                                      Structural Reform Database (SRD)
-    WEO_LIVE_2020_JAN_ICP2017PPP_VINTAGE           WEO Live 2020 January (ICP2017PPP Weights)
-    WTOIMFTT                                                WTO-IMF Tariff Tracker (WTOIMFTT)
+    WEO_LIVE_2020_JUN_VINTAGE                                    WEO Live 2020 June
+    WEO_LIVE_2020_JUN_ICP2017PPP_VINTAGE    WEO Live 2020 June (ICP2017PPP Weights)
+    CCI                                             Climate Change Indicators (CCI)
+    HPD                                                Historical Public Debt (HPD)
+    WEO_LIVE_2020_OCT_VINTAGE                                 WEO Live 2020 October
+                                                             ...                   
+    WEO_LIVE_2022_OCT_VINTAGE                                 WEO Live 2022 October
+    FDI                                           Financial Development Index (FDI)
+    WEO_LIVE_2021_JUL_VINTAGE                                    WEO Live 2021 July
+    ISORA_2018_DATA_PUB                                             ISORA 2018 Data
+    WEO_LIVE_2024_JUL_ICP2021PPP_VINTAGE    WEO Live 2024 July (ICP2021PPP Weights)
     Length: 116, dtype: object
 
 ## 2) WEO (public)
@@ -182,13 +182,13 @@ codelists.tail()
 
 <div>
 
-|     | codelist_id        | name                      | version | n_codes |
-|-----|--------------------|---------------------------|---------|---------|
-| 122 | CL_COMMODITY       | Commodity                 | 2.2.0   | 135     |
-| 123 | CL_DERIVATION_TYPE | Derivation Type           | 1.2.1   | 12      |
-| 124 | CL_CIVIL_STATUS    | Civil (or Marital) Status | 1.0.1   | 8       |
-| 125 | CL_EXRATE          | Exchange Rate             | 1.2.0   | 37      |
-| 126 | CL_TOPIC           | Topic                     | 2.2.0   | 118     |
+|     | codelist_id        | name                                  | version | n_codes |
+|-----|--------------------|---------------------------------------|---------|---------|
+| 122 | CL_DERIVATION_TYPE | Derivation Type                       | 1.2.1   | 12      |
+| 123 | CL_CONF_STATUS     | Confidentiality Status                | 1.0.0   | 12      |
+| 124 | CL_COMMODITY       | Commodity                             | 2.2.0   | 135     |
+| 125 | CL_GFS_STO         | GFS Stocks, Transactions, Other Flows | 2.9.0   | 389     |
+| 126 | CL_CIVIL_STATUS    | Civil (or Marital) Status             | 1.0.1   | 8       |
 
 </div>
 
