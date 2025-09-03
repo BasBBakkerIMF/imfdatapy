@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Cached MSAL token
+msal_token_cache.bin
+
 # C extensions
 *.so
 
