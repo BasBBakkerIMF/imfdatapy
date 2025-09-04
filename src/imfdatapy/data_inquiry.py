@@ -331,7 +331,7 @@ class DataSet:
         self.connection = connection # TODO: make sure this isn't a copy
     
     #@cached_property
-    def _dimension_names(self) -> List[Dict[str, Optional[str]]]:
+    def _dimensions(self) -> List[Dict[str, Optional[str]]]:
         """
         
         """
@@ -347,19 +347,19 @@ class DataSet:
             rows.append({"dimension": dim.id, "codelists": cl_id})
         return rows
     
-    def get_dimension_names(self) -> pd.DataFrame:
+    def get_dimensions(self) -> pd.DataFrame:
         """
         Return a DataFrame with two columns:
         - dimension: the dimension ID
         - codelists: the codelist ID if available, else None
         """
-        return pd.DataFrame(self._dimension_names(), columns=["dimension", "codelists"])
+        return pd.DataFrame(self._dimensions(), columns=["dimension", "codelists"])
     
-    def get_dimension_names_env(self):
+    def get_dimensions_env(self):
         """
         Convenience: build a dot-accessible env mapping
         """
-        return make_env(self._dimension_names())
+        return make_env(self._dimensions())
     
     #@cached_property
     def codelists_summary(self) -> pd.DataFrame:

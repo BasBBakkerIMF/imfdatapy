@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide shows how to use `DataInquiry` from **imfdatapy** to:
+This guide shows how to use `IMFData` from **imfdatapy** to:
 
 - list availabe datasets,
 - explore a dataset’s dimensions and codelists,
@@ -11,8 +11,8 @@ This guide shows how to use `DataInquiry` from **imfdatapy** to:
 
 ### Authentication
 
-- `auth=False`: no auth headers (public datasets like WEO).
-- `auth=True`: MSAL authentication (for protected datasets like BBGDL).
+- `authentication=False`: no auth headers (public datasets like WEO).
+- `authentication=True`: MSAL authentication (for protected datasets like BBGDL).
 
 ## Install
 
@@ -24,14 +24,15 @@ This guide shows how to use `DataInquiry` from **imfdatapy** to:
 ## Imports
 
 ``` python
-from imfdatapy import DataInquiry, make_key_str
+from imfdatapy import IMFData, make_key_str
 ```
 
 ## 1) List datasets (no dataset context needed)
 
 ``` python
 # Public dataflows (no auth)
-all_flows = DataInquiry.datasets(auth=False)
+connection = IMFData()
+all_flows = connection.datasets()
 all_flows
 ```
 
@@ -51,7 +52,8 @@ all_flows
 # Dataflows with auth (if your account grants access to more)
 
 ``` python
-all_flows = DataInquiry.datasets(auth=True)
+connection = IMFData(authentication=True)
+all_flows = connection.datasets()
 all_flows
 ```
 
@@ -73,14 +75,14 @@ all_flows
 Create a client for the `"WEO"` dataset (no auth needed).
 
 ``` python
-weo = DataInquiry(dataset="WEO", auth=False)
+weo = connection.getDataset(datasetID="WEO")
 ```
 
 ### Dimensions and a convenient env
 
 ``` python
 # Dimensions
-dim_df = weo.dimension_names
+dim_df = weo.get_dimensions()
 print(dim_df)
 ```
 
@@ -92,7 +94,7 @@ print(dim_df)
 
 ``` python
 # Build a dot-accessible env mapping Dimension -> Codelist id
-dim_env = weo.dimension_env()
+dim_env = weo.get_dimensions_env()
 ```
 
 ### Explore codelists (countries, indicators, frequency)
@@ -176,7 +178,7 @@ print(weo_data.tail())
 
 ``` python
 # Summary of all codelists in WEO
-codelists = weo.codelists_summary
+codelists = weo.codelists_summary()
 codelists.tail()
 ```
 
@@ -211,11 +213,11 @@ cl_df.head()
 
 ## 3) Bloomberg (protected dataset)
 
-Instantiate with `auth=True` to attach MSAL auth headers.
+Instantiate with `authentication=True` to attach MSAL auth headers.
 
 ``` python
-bbg = DataInquiry(dataset="BBGDL", auth=True)
-bbg_dim_env = bbg.dimension_env()
+bbg = connection.getDataset(datasetID="BBGDL")
+bbg_dim_env = bbg.get_dimensions_env()
 
 tickers_df, tickers     = bbg.codelist(bbg_dim_env.TICKER)
 fields_df, fields       = bbg.codelist(bbg_dim_env.FIELD)
