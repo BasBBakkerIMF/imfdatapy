@@ -7,7 +7,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Optional
 
 import pandas as pd
 import sdmx
@@ -48,6 +48,19 @@ class DimensionEnv:
         pairs = ", ".join(f"{k}={v!r}" for k, v in self._attrs.items())
         return f"DimensionEnv({pairs})"
 
+def make_env(pairs: Iterable[tuple[str, str]], *, keep: str = "first") -> DimensionEnv:
+    d: Dict[str, str] = {}
+    for label, code in pairs:
+        if code in (None, ""):
+            continue
+        k = sanitize(label)
+        if not k:
+            continue
+        if keep == "first":
+            d.setdefault(k, code)
+        else:
+            d[k] = code
+    return DimensionEnv(d)
 
 def make_key_str(key) -> str:
     parts = []
@@ -123,6 +136,21 @@ def acquire_access_token(scopes: List[str] = SCOPES) -> Dict[str, str]:
         err = (result or {}).get("error_description", (result or {}).get("error", "unknown error"))
         raise RuntimeError(f"Failed to acquire token: {err}")
     return result
+
+def get_request_header(auth: bool = True) -> Dict[str, str]:
+    """
+    Return a standard header with optional Authorization.
+    """
+    headers = {"User-Agent": "imfidata-client"}
+    if not auth:
+        return headers
+
+    token_resp = acquire_access_token()
+    token_type = token_resp.get("token_type", "Bearer")
+    access_token = token_resp["access_token"]
+    headers["Authorization"] = f"{token_type} {access_token}"
+    return headers
+
 
 
 # =========================
@@ -220,141 +248,161 @@ def convert_time_period_auto(df, time_col: str = "TIME_PERIOD", out_col: str = "
     return df_copy
 
 
-# =========================
-# Auth strategy classes
-# =========================
-class AuthStrategy:
-    def headers(self) -> Dict[str, str]:
-        return {"User-Agent": "imfidata-client"}
+class IMFData:
 
+    __slots__ = ["_client", "_headers", "authenticated"]
 
-@dataclass
-class NoAuth(AuthStrategy):
-    pass
+    def __init__(self, authentication: bool = False):
+        self._client = sdmx.Client("IMF_DATA")
+        self._headers = get_request_header(authentication)
+        self.authenticated = authentication
 
+    def __str__(self) -> str:
+        if self.authenticated:
+            return f"Authenticated connection to data.imf.org."
+        else:
+            return f"Unauthenticated connection to data.imf.org."
+    
+    def authenticate(self):
+        '''
+        Include Authorization header in future requests.
+        '''
+        self._headers = get_request_header(True)
+        self.authenticated = True
 
-@dataclass
-class MsalAuth(AuthStrategy):
-    scopes: List[str] = field(default_factory=lambda: SCOPES)
+    def remove_authentication(self):
+        '''
+        Remove Authorization header from future requests.
+        '''
+        self._headers = get_request_header(False)
+        self.authenticated = False
 
-    def headers(self) -> Dict[str, str]:
-        tok = acquire_access_token(self.scopes)
-        return {
-            "User-Agent": "imfidata-client",
-            "Authorization": f"{tok.get('token_type', 'Bearer')} {tok['access_token']}",
-        }
-
-
-# =========================
-# DataInquiry: all public API here
-# =========================
-@dataclass
-class DataInquiry:
-    """
-    Lightweight wrapper around sdmx.Client that bundles dataset + auth.
-    """
-    dataset: str | None = None
-    # accept bool or strategy; default False = NoAuth
-    auth: AuthStrategy | bool = False
-    client: sdmx.Client | None = field(default=None, init=False)
-
-    def __post_init__(self):
-        # normalize bool -> strategy (keeps compatibility with AuthStrategy objects)
-        if isinstance(self.auth, bool):
-            self.auth = MsalAuth() if self.auth else NoAuth()
-        if self.client is None:
-            self.client = sdmx.Client("IMF_DATA", headers=self.auth.headers())
-
-    # ---------- tiny env helpers ----------
-    @staticmethod
-    def make_env(pairs: Iterable[tuple[str, str]], *, keep: str = "first") -> DimensionEnv:
-        d: Dict[str, str] = {}
-        for label, code in pairs:
-            if code in (None, ""):
-                continue
-            k = sanitize(label)
-            if not k:
-                continue
-            if keep == "first":
-                d.setdefault(k, code)
-            else:
-                d[k] = code
-        return DimensionEnv(d)
-
-    def dimension_env(self) -> DimensionEnv:
-        df = self.dimension_names
-        return self.make_env((row["Dimension"], row["Codelist"]) for _, row in df.iterrows())
-
-    @classmethod
-    def datasets(cls, auth: bool = False) -> pd.DataFrame:
-        auth = MsalAuth() if auth else NoAuth()
-        temp_client = sdmx.Client("IMF_DATA", headers=auth.headers())
-        msg = temp_client.dataflow()
-        return sdmx.to_pandas(msg.dataflow)
-
-    @cached_property
-    def _dsd_message(self):
-        if not self.dataset:
-            raise ValueError("dataset required for DSD/codelist methods")
-        return self.client.datastructure(
-            f"DSD_{self.dataset}", params={"references": "descendants"}
-        )
-
-    @cached_property
-    def dimension_names(self) -> pd.DataFrame:
-        if not self.dataset:
-            raise ValueError("dataset required for dimension_names")
-        msg = self.client.dataflow(self.dataset)
-        dsd = extract_dsd_object(msg)
+    @property       
+    def datasets(self) -> pd.DataFrame:
+        """
+        Fetches all IMF datasets and returns a DataFrame:
+        columns: id, version, agencyID, name_en
+        """
         rows = []
-        for dim in dsd.dimensions.components:
-            cl = resolve_codelist(msg, dim)
-            rows.append({"Dimension": dim.id, "Codelist": cl.id if cl else None})
-        return pd.DataFrame(rows, columns=["Dimension", "Codelist"])
+        for dataset in self._client.dataflow(headers=self._headers).iter_objects():
+            if isinstance(dataset, sdmx.model.v21.DataflowDefinition):
+                rows.append(
+                {
+                    "id": dataset.id,
+                    "version": dataset.version,
+                    "agencyID": dataset.maintainer,
+                    "name_en": dataset.name,
+                }
+                )
+        return pd.DataFrame(rows, columns=["id", "version", "agencyID", "name_en"])
 
-    @cached_property
-    def codelists_summary(self) -> pd.DataFrame:
-        msg = self._dsd_message
-        rows = [
-            {
-                "codelist_id": cl_id,
-                "name": str(getattr(cl, "name", "")),
-                "version": str(getattr(cl, "version", "")),
-                "n_codes": len(cl),
-            }
-            for cl_id, cl in msg.codelist.items()
-        ]
-        return pd.DataFrame(rows, columns=["codelist_id", "name", "version", "n_codes"])
+    def getDataset(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None) -> DataSet:
+        """
+        Creates Dataset object for given dataset.
+        """
+        #TODO: add agency and version parameters
+        msg = self._client.dataflow(datasetID, headers=self._headers)
+        return DataSet(msg=msg, connection = self)
+    
+    def getCodelist(self, codelist_id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.Codelist:
+        # TODO: add agency and version parameters
+        return self._client.codelist(codelist_id, headers=self._headers).codelist[0]
 
-    def codelist(self, codelist_id: str) -> tuple[pd.DataFrame, DimensionEnv]:
-        msg = self._dsd_message
-        if codelist_id not in msg.codelist:
-            raise KeyError(f"Codelist '{codelist_id}' not found in dataset '{self.dataset}'")
-        cl = msg.codelist[codelist_id]
-        rows = [
-            {
-                "code_id": code.id,
-                "name": str(getattr(code, "name", "")),
-                "description": str(getattr(code, "description", "")),
-            }
-            for code in cl
-        ]
-        df = pd.DataFrame(rows, columns=["code_id", "name", "description"])
-        env = self.make_env((row["name"], row["code_id"]) for _, row in df.iterrows())
-        return df, env
-
-    def get_data(
-        self,
-        key: str,
-        params: dict | None = None,
-        *,
-        convert_dates: bool = True,
-    ) -> pd.DataFrame:
-        if not self.dataset:
-            raise ValueError("dataset required for get_data")
-        msg = self.client.data(resource_id=self.dataset, key=key, params=params or {})
+    def get_data(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None, key: str = 'all', params: dict = {}, *, convert_dates: bool = True,) -> pd.DataFrame:
+        msg = self._client.data(resource_id=datasetID, key=key, params=params, headers=self._headers)
         df = sdmx.to_pandas(msg).reset_index()
         if convert_dates:
-            df = convert_time_period_auto(df, time_col="TIME_PERIOD", out_col="date")
-        return df
+            if len(df) > 0:
+                df = convert_time_period_auto(df, time_col="TIME_PERIOD", out_col="date")
+        return df 
 
+class DataSet:
+
+    __slots__ = ["datasetID", "agencyID", "version", "dataflow", "connection"]
+
+    def __init__(self, msg: sdmx.message.StructureMessage, connection: IMFData):
+        if len(msg.dataflow) != 1:
+            raise ValueError("Expected exactly one Dataflow in StructureMessage.")
+        self.datasetID = msg.dataflow[0].id
+        self.agencyID = msg.dataflow[0].maintainer.id
+        self.version = msg.dataflow[0].version
+        self.dataflow = msg
+        self.connection = connection # TODO: make sure this isn't a copy
+    
+    #@cached_property
+    def _dimension_names(self) -> List[Dict[str, Optional[str]]]:
+        """
+        
+        """
+        rows = []
+        for dim in self.dataflow.dataflow[self.datasetID].structure.dimensions.components:
+            conceptIdentity = dim.concept_identity
+            codelist = conceptIdentity.core_representation.enumerated
+            if codelist is not None:
+                cl_id = codelist.id
+            else:
+                cl_id = None
+            #TODO: tuple not dictonary
+            rows.append({"dimension": dim.id, "codelists": cl_id})
+        return rows
+    
+    def get_dimension_names(self) -> pd.DataFrame:
+        """
+        Return a DataFrame with two columns:
+        - dimension: the dimension ID
+        - codelists: the codelist ID if available, else None
+        """
+        return pd.DataFrame(self._dimension_names(), columns=["dimension", "codelists"])
+    
+    def get_dimension_names_env(self):
+        """
+        Convenience: build a dot-accessible env mapping
+        """
+        return make_env(self._dimension_names())
+    
+    #@cached_property
+    def codelists_summary(self) -> pd.DataFrame:
+        rows = [
+            {
+                    "codelist_id": cl.id,
+                    "name": cl.name,
+                    "version": cl.version,
+                    "n_codes": len(cl),
+            }
+            for cl in self.dataflow.codelist.values()
+        ]
+        return pd.DataFrame(rows, columns=["codelist_id", "name", "version", "n_codes"])
+    
+    #@lru_cache(maxsize=10)
+    def _get_codelist(self, codelist_id: str) -> list[Dict[str, Optional[str]]]:
+        """
+        Return the codes for a single codelist as DataFrame with columns:
+        code_id, name, description
+        """
+        try:
+            cl = self.dataflow.codelist[codelist_id]
+        except KeyError:
+            raise ValueError(f"Codelist '{codelist_id}' not found.")
+        rows = []
+        for code in cl.items.values():
+            rows.append(
+                {
+                    "code_id": code.id,
+                    "name": code.name,
+                    "description": code.description,
+                }
+            )
+        return rows
+    
+    def get_codelist(self, codelist_id: str) -> pd.DataFrame:
+        """
+        Return the codes for a single codelist as DataFrame with columns:
+        code_id, name, description
+        """
+        return pd.DataFrame(self._get_codelist(codelist_id), columns=["code_id", "name", "description"])
+
+    def get_codelist_env(self, codelist_id: str) -> pd.DataFrame:
+        return make_env(self._get_codelist(codelist_id), "code_id", "name")
+
+    def get_data(self, key: str, params: dict = {}, *, convert_dates: bool = True,) -> pd.DataFrame:
+        return self.connection.get_data(self.datasetID, self.agencyID, self.version, key=key, params=params, convert_dates=convert_dates)
