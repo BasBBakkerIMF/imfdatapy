@@ -309,6 +309,7 @@ class IMFData:
         return self._client.codelist(codelist_id, headers=self._headers).codelist[0]
 
     def get_data(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None, key: str = 'all', params: dict = {}, *, convert_dates: bool = True,) -> pd.DataFrame:
+        # TODO: add agency and version parameters
         msg = self._client.data(resource_id=datasetID, key=key, params=params, headers=self._headers)
         df = sdmx.to_pandas(msg).reset_index()
         if convert_dates:
