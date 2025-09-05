@@ -32,7 +32,7 @@ from imfdatapy import IMFData, make_key_str
 ``` python
 # Public dataflows (no auth)
 connection = IMFData()
-all_flows = connection.datasets()
+all_flows = connection.datasets
 all_flows
 ```
 
@@ -53,7 +53,7 @@ all_flows
 
 ``` python
 connection = IMFData(authentication=True)
-all_flows = connection.datasets()
+all_flows = connection.datasets
 all_flows
 ```
 
@@ -75,7 +75,8 @@ all_flows
 Create a client for the `"WEO"` dataset (no auth needed).
 
 ``` python
-weo = connection.getDataset(datasetID="WEO")
+connection = IMFData()
+weo = connection.getDataset("WEO")
 ```
 
 ### Dimensions and a convenient env
@@ -100,9 +101,9 @@ dim_env = weo.get_dimensions_env()
 ### Explore codelists (countries, indicators, frequency)
 
 ``` python
-countries_df, countries  = weo.codelist(dim_env.COUNTRY)
-indicators_df, indicators = weo.codelist(dim_env.INDICATOR)
-frequency_df, frequency   = weo.codelist(dim_env.FREQUENCY)
+countries_df = weo.get_codelist(dim_env.COUNTRY)
+indicators_df  = weo.get_codelist(dim_env.INDICATOR)
+frequency_df = weo.get_codelist(dim_env.FREQUENCY)
 
 countries_df.head(), indicators_df.head(), frequency_df.head()
 ```
@@ -143,6 +144,9 @@ countries_df.head(), indicators_df.head(), frequency_df.head()
 ### Build a key and fetch data
 
 ``` python
+countries = weo.get_codelist_env(dim_env.COUNTRY)
+indicators  = weo.get_codelist_env(dim_env.INDICATOR)
+frequency = weo.get_codelist_env(dim_env.FREQUENCY)
 key = [
     [countries.United_States, countries.Netherlands_The],
     [indicators.Unemployment_rate],
@@ -195,7 +199,7 @@ codelists.tail()
 </div>
 
 ``` python
-cl_df, cl_env = weo.codelist("CL_SEX")
+cl_df = weo.get_codelist("CL_SEX")
 cl_df.head()
 ```
 
@@ -216,12 +220,13 @@ cl_df.head()
 Instantiate with `authentication=True` to attach MSAL auth headers.
 
 ``` python
-bbg = connection.getDataset(datasetID="BBGDL")
+connection = IMFData(True)
+bbg = connection.getDataset("BBGDL")
 bbg_dim_env = bbg.get_dimensions_env()
 
-tickers_df, tickers     = bbg.codelist(bbg_dim_env.TICKER)
-fields_df, fields       = bbg.codelist(bbg_dim_env.FIELD)
-frequency_df, frequency = bbg.codelist(bbg_dim_env.FREQUENCY)
+tickers   = bbg.get_codelist_env(bbg_dim_env.TICKER)
+fields    = bbg.get_codelist_env(bbg_dim_env.FIELD)
+frequency = bbg.get_codelist_env(bbg_dim_env.FREQUENCY)
 
 bbg_key = [
      [tickers.ALBANIAN_LEK_SPOT],

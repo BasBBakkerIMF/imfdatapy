@@ -50,7 +50,7 @@ class DimensionEnv:
 
 def make_env(pairs: Iterable[tuple[str, str]], *, keep: str = "first") -> DimensionEnv:
     d: Dict[str, str] = {}
-    for label, code in pairs:
+    for code, label, *_ in pairs:
         if code in (None, ""):
             continue
         k = sanitize(label)
@@ -343,8 +343,7 @@ class DataSet:
                 cl_id = codelist.id
             else:
                 cl_id = None
-            #TODO: tuple not dictonary
-            rows.append({"dimension": dim.id, "codelists": cl_id})
+            rows.append((cl_id, dim.id))
         return rows
     
     def get_dimensions(self) -> pd.DataFrame:
@@ -353,7 +352,7 @@ class DataSet:
         - dimension: the dimension ID
         - codelists: the codelist ID if available, else None
         """
-        return pd.DataFrame(self._dimensions(), columns=["dimension", "codelists"])
+        return pd.DataFrame([(y,x) for (x,y) in self._dimensions()], columns=["dimension", "codelists"])
     
     def get_dimensions_env(self):
         """
@@ -387,11 +386,11 @@ class DataSet:
         rows = []
         for code in cl.items.values():
             rows.append(
-                {
-                    "code_id": code.id,
-                    "name": code.name,
-                    "description": code.description,
-                }
+                (
+                    code.id,
+                    code.name,
+                    code.description,
+                )
             )
         return rows
     
@@ -403,7 +402,7 @@ class DataSet:
         return pd.DataFrame(self._get_codelist(codelist_id), columns=["code_id", "name", "description"])
 
     def get_codelist_env(self, codelist_id: str) -> pd.DataFrame:
-        return make_env(self._get_codelist(codelist_id), "code_id", "name")
+        return make_env(self._get_codelist(codelist_id))
 
     def get_data(self, key: str, params: dict = {}, *, convert_dates: bool = True,) -> pd.DataFrame:
         return self.connection.get_data(self.datasetID, self.agencyID, self.version, key=key, params=params, convert_dates=convert_dates)
