@@ -21,12 +21,9 @@ def sanitize(name: str) -> str:
     """Convert any string into a valid Python identifier."""
     if not isinstance(name, str):
         name = str(name)
-    name = re.sub(r"[^a-zA-Z0-9\s]", "_", name)
-    name = re.sub(r"\s+", "_", name)
-    name = re.sub(r"_+", "_", name)
-    name = name.strip("_")
+    name = re.sub(r"[^A-Za-z0-9]+", "_", name).strip("_")
     if not name or not name[0].isalpha():
-        name = "X" + name
+        name = f"X{name}"
     return name
 
 
@@ -65,19 +62,30 @@ def make_env(pairs: Iterable[tuple[str, str]], *, keep: str = "first") -> Dimens
 def make_key_str(key) -> str:
     parts = []
     for group in key:
-        if group is None or (isinstance(group, list) and len(group) == 0):
-            part = ""
+        if group is None:
+            parts.append('')
+            continue
+
         elif isinstance(group, str):
-            part = str(group)  # single string
+            parts.append(group)  # single string
+            continue
+
+        elif (hasattr(group, '__len__') and len(group) == 0):
+            parts.append('') 
+            continue
+
         else:
             # Assume it's an iterable (list, tuple, R vector, etc.)
-            items = [
-                str(x)
-                for x in group
-                if x is not None and x != "" and not str(x).lower() == "null"
-            ]
-            part = "+".join(items) if items else ""
-        parts.append(part)
+            items = []
+            for x in group:
+                if x is None:
+                    continue
+                sx = str(x)
+                if sx == "" or sx.lower() == "null":
+                    continue
+                items.append(sx)
+
+            parts.append("+".join(items) if items else "")
     return ".".join(parts)
 
 
