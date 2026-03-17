@@ -184,31 +184,24 @@ def convert_time_period_auto(df, time_col: str = "TIME_PERIOD", out_col: str = "
 
 class IMFData:
 
-    __slots__ = ["_client", "_headers", "authenticated", "internalUser", "portalEnviroment"]
+    __slots__ = ["_client", "_headers", "authenticated", "internalUser", "portalEnvironment"]
 
-    def __init__(self, authentication: bool = False, internalUser: bool = True, portalEnviroment: bool = True):
-        if portalEnviroment:
+    def __init__(self, authentication: bool = False, internalUser: bool = True, portalEnvironment: bool = True):
+        if portalEnvironment:
             self._client = sdmx.Client("IMF_DATA")
         else:
-            if internalUser:
-                raise NotImplementedError("Connection to Studio enviroment not implemented.")
-            else:
+            if not internalUser:
                 raise PermissionError("External Users do not have access to Studio enviroment.")
+            raise NotImplementedError("Connection to Studio enviroment not implemented.")
 
         self._headers = get_request_header(authentication, internalUser)
-        self.portalEnviroment = portalEnviroment
+        self.portalEnvironment = portalEnvironment
         self.internalUser = internalUser
         self.authenticated = authentication
 
     def __str__(self) -> str:
-        if self.portalEnviroment:
-            env_str = "data.imf.org"
-        else:
-            env_str = "datastudio.imf.org"
-        if self.authenticated:
-            return f"Authenticated connection to {env_str}."
-        else:
-            return f"Unauthenticated connection to {env_str}."
+        env_str = "data.imf.org" if self.portalEnvironment else "datastudio.imf.org"
+        return f"{'Authenticated' if self.authenticated else 'Unauthenticated'} connection to {env_str}."
     
     def authenticate(self):
         '''
