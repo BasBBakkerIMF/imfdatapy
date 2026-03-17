@@ -67,14 +67,14 @@ def get_token(client_id:str, scopes:list[str], authority:str, cache_path:str) ->
     return token
 
 
-def get_request_header(auth: bool = True, internal: bool = True) -> dict[str, str]:
+def get_request_header(auth: bool = True, internalUser: bool = True) -> dict[str, str]:
     """Return a standard header with optional Authorization. if internal = True the token will be valid for portal and studio. if internal = false token is only valid for portal and SSO is not attempted."""
     headers = {"User-Agent": "imfidata-client"}
     if not auth:
         return headers
 
     access_token = None
-    if internal:
+    if internalUser:
         try:
             # Attempt SSO
             access_token = get_token_SSO("internal")

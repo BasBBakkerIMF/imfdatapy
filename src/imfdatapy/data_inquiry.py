@@ -5,8 +5,7 @@ from __future__ import annotations
 # =========================
 import re
 from dataclasses import dataclass, field
-from functools import cached_property
-from typing import Dict, Iterable, List, Tuple, Optional
+from typing import Dict, Iterable, List, Optional
 
 import pandas as pd
 import sdmx
@@ -185,31 +184,44 @@ def convert_time_period_auto(df, time_col: str = "TIME_PERIOD", out_col: str = "
 
 class IMFData:
 
-    __slots__ = ["_client", "_headers", "authenticated"]
+    __slots__ = ["_client", "_headers", "authenticated", "internalUser", "portalEnviroment"]
 
-    def __init__(self, authentication: bool = False):
-        self._client = sdmx.Client("IMF_DATA")
-        self._headers = get_request_header(authentication)
+    def __init__(self, authentication: bool = False, internalUser: bool = True, portalEnviroment: bool = True):
+        if portalEnviroment:
+            self._client = sdmx.Client("IMF_DATA")
+        else:
+            if internalUser:
+                raise NotImplementedError("Connection to Studio enviroment not implemented.")
+            else:
+                raise PermissionError("External Users do not have access to Studio enviroment.")
+
+        self._headers = get_request_header(authentication, internalUser)
+        self.portalEnviroment = portalEnviroment
+        self.internalUser = internalUser
         self.authenticated = authentication
 
     def __str__(self) -> str:
-        if self.authenticated:
-            return f"Authenticated connection to data.imf.org."
+        if self.portalEnviroment:
+            env_str = "data.imf.org"
         else:
-            return f"Unauthenticated connection to data.imf.org."
+            env_str = "datastudio.imf.org"
+        if self.authenticated:
+            return f"Authenticated connection to {env_str}."
+        else:
+            return f"Unauthenticated connection to {env_str}."
     
     def authenticate(self):
         '''
         Include Authorization header in future requests.
         '''
-        self._headers = get_request_header(True)
+        self._headers = get_request_header(True, self.internalUser)
         self.authenticated = True
 
     def remove_authentication(self):
         '''
         Remove Authorization header from future requests.
         '''
-        self._headers = get_request_header(False)
+        self._headers = get_request_header(False, self.internalUser)
         self.authenticated = False
 
     @property       
