@@ -145,11 +145,6 @@ class IMFData:
         msg = self._client.dataflow(datasetID)
         return DataSet(msg=msg, connection = self)
     
-    def getCodelist(self, codelist_id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.Codelist:
-        # TODO: add agency and version parameters
-        self._sync_headers()
-        return self._client.codelist(codelist_id).codelist[0]
-
     def get_data(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None, key: str = 'all', params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
         params = params or {}
         self._sync_headers()
@@ -159,4 +154,46 @@ class IMFData:
         if convert_dates:
             if len(df) > 0:
                 df = convert_time_period_auto(df, time_col="TIME_PERIOD", out_col="date")
-        return df 
+        return df
+
+
+    def _call(self, method, *args, **kwargs):
+        self._sync_headers()
+        return method(*args, **kwargs)
+
+    def _get_list(self, method, *args, attr: str, **kwargs):
+        msg = self._call(method, *args, **kwargs)
+        container = getattr(msg, attr)
+        return container 
+
+    def _get_first(self, method, *args, attr: str, **kwargs):
+        return self._get_list(method, *args, attr=attr, **kwargs)[0]
+    
+    @staticmethod
+    def _set_kwargs(kwargs, agency:Optional[str] = None, version:Optional[str] = None):
+        if agency is not None:
+            kwargs["agency_id"] = agency
+        if version is not None:
+            kwargs["version"] = version
+        return kwargs
+
+    def getCodelist(self: dict[str], id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.Codelist:
+        kwargs = self._set_kwargs({"attr": "codelist"}, agency, version)
+        return self._get_first(self._client.codelist, id, **kwargs)
+    
+    def getConceptScheme(self, id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.ConceptScheme:
+        kwargs = self._set_kwargs({"attr": "concept_scheme"}, agency, version)
+        return self._get_first(self._client.conceptscheme, id, **kwargs)
+    
+    #def getDataStructure(self, id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.DataStructure:
+    #    kwargs = self._set_kwargs({"attr": "datastructure"}, agency, version)
+    #    return self._get_first(self._client.datastructure, id, **kwargs)
+    
+    def listCodelists(self, id: str, agency:str = 'all', version:str = 'all') -> list[sdmx.model.common.Codelist]:
+         return self._get_list(self._client.codelist, id, agency_id=agency, version=version, attr="codelist")
+    
+    def listConceptSchemes(self, id:Optional[str], agency:str = 'all', version:str = 'all') -> list[sdmx.model.common.ConceptScheme]:
+        return self._get_list(self._client.conceptscheme, id, agency_id=agency, version=version, attr="concept_scheme")
+    
+    #def listDataStructures(self, id:Optional[str], agency:str = 'all', version:str = 'all') -> list[sdmx.model.common.Structure]:
+    #    return self._get_list(self._client.datastructure, id, agency_id=agency, version=version, attr="datastructure")
