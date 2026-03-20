@@ -100,13 +100,11 @@ class DataSet:
 
     __slots__ = ["datasetID", "agencyID", "version", "dataflow", "connection"]
 
-    def __init__(self, msg: sdmx.message.StructureMessage, connection):
-        if len(msg.dataflow) != 1:
-            raise ValueError("Expected exactly one Dataflow in StructureMessage.")
-        self.datasetID = msg.dataflow[0].id
-        self.agencyID = msg.dataflow[0].maintainer.id
-        self.version = msg.dataflow[0].version
-        self.dataflow = msg
+    def __init__(self, dataflow: sdmx.model.common.Dataflow, connection):
+        self.datasetID = dataflow.id
+        self.agencyID = dataflow.maintainer.id
+        self.version = dataflow.version
+        self.dataflow = dataflow
         self.connection = connection # TODO: make sure this isn't a copy
     
     #@cached_property

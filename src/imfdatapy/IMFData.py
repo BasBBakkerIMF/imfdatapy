@@ -35,7 +35,6 @@ def _make_imf_datastudio_source(workspace: str):
 
     name = f"IMF DataStudio [{workspace}]"
 
-    # IMPORTANT: pass id that matches cls._id to satisfy sdmx invariant
     return cls(id=source_id, url=url, name=name)
 
 
@@ -45,8 +44,8 @@ class _IMFDataStudioClientFactory:
         workspace = workspace or "integration"
         src = _make_imf_datastudio_source(workspace)
 
-        client = sdmx.Client()     # build without source lookup 
-        client.source = src        # attach source directly 
+        client = sdmx.Client() 
+        client.source = src
         return client
 
 class IMFData:
@@ -110,53 +109,6 @@ class IMFData:
         self._token_provider.disable()
         self._sync_headers()
 
-
-    @property
-    def datasets(self) -> pd.DataFrame:
-        """
-        Fetches all IMF datasets and returns a DataFrame:
-        columns: id, version, agencyID, name_en
-        """
-        self._sync_headers()
-
-        rows = []
-        msg = self._client.dataflow()
-
-        for obj in msg.iter_objects():
-            if isinstance(obj, sdmx.model.v21.DataflowDefinition):
-                rows.append(
-                    {
-                        "id": obj.id,
-                        "version": obj.version,
-                        "agencyID": getattr(obj.maintainer, "id", obj.maintainer),
-                        "name_en": str(obj.name) if obj.name is not None else None,
-                    }
-                )
-
-        return pd.DataFrame(rows, columns=["id", "version", "agencyID", "name_en"])
-
-
-    def getDataset(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None) -> DataSet:
-        """
-        Creates Dataset object for given dataset.
-        """
-        self._sync_headers()
-        #TODO: add agency and version parameters
-        msg = self._client.dataflow(datasetID)
-        return DataSet(msg=msg, connection = self)
-    
-    def get_data(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None, key: str = 'all', params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
-        params = params or {}
-        self._sync_headers()
-        # TODO: add agency and version parameters
-        msg = self._client.data(resource_id=datasetID, key=key, params=params)
-        df = sdmx.to_pandas(msg).reset_index()
-        if convert_dates:
-            if len(df) > 0:
-                df = convert_time_period_auto(df, time_col="TIME_PERIOD", out_col="date")
-        return df
-
-
     def _call(self, method, *args, **kwargs):
         self._sync_headers()
         return method(*args, **kwargs)
@@ -164,7 +116,18 @@ class IMFData:
     def _get_list(self, method, *args, attr: str, **kwargs):
         msg = self._call(method, *args, **kwargs)
         container = getattr(msg, attr)
-        return container 
+        return container
+
+    @staticmethod
+    def _list_to_pandas(container):
+        rows = []
+        for artefact in container.values():
+            rows.append({"id":artefact.id, 
+                         "version":artefact.version, 
+                         "agencyID": getattr(artefact.maintainer, "id", artefact.maintainer),
+                         "name_en": str(artefact.name) if artefact.name is not None else None
+                         })
+        return pd.DataFrame(rows, columns=["id", "version", "agencyID", "name_en"]) 
 
     def _get_first(self, method, *args, attr: str, **kwargs):
         return self._get_list(method, *args, attr=attr, **kwargs)[0]
@@ -176,6 +139,31 @@ class IMFData:
         if version is not None:
             kwargs["version"] = version
         return kwargs
+    
+    @property
+    def datasets(self) -> pd.DataFrame:
+        return self.listDatasets()
+    
+    def listDatasets(self, id: Optional[str] = None, agency:str = 'all', version:str = 'all') -> pd.DataFrame:
+        args = [id] if id else []
+        return self._list_to_pandas(self._get_list(self._client.dataflow, *args, agency_id=agency, version=version, attr="dataflow"))
+    
+    def listCodelists(self, id: Optional[str] = None, agency:str = 'all', version:str = 'all') -> pd.DataFrame:
+        args = [id] if id else []
+        return self._list_to_pandas(self._get_list(self._client.codelist, *args, agency_id=agency, version=version, attr="codelist"))
+    
+    def listConceptSchemes(self, id: Optional[str] = None, agency:str = 'all', version:str = 'all')  -> pd.DataFrame:
+        args = [id] if id else []
+        return self._list_to_pandas(self._get_list(self._client.conceptscheme, *args, agency_id=agency, version=version, attr="concept_scheme"))
+    
+    def listDataStructures(self, id: Optional[str] = None, agency:str = 'all', version:str = 'all') -> list[sdmx.model.common.Structure]:
+        args = [id] if id else []
+        return self._list_to_pandas(self._get_list(self._client.datastructure, id, agency_id=agency, version=version, attr="structure"))
+
+    def getDataset(self, id: str, agency:Optional[str] = None, version:Optional[str] = None) -> DataSet:
+        kwargs = self._set_kwargs({"attr": "dataflow"}, agency, version)
+        dataflow = self._get_first(self._client.dataflow, id, **kwargs)
+        return DataSet(dataflow, connection = self)
 
     def getCodelist(self: dict[str], id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.Codelist:
         kwargs = self._set_kwargs({"attr": "codelist"}, agency, version)
@@ -185,15 +173,22 @@ class IMFData:
         kwargs = self._set_kwargs({"attr": "concept_scheme"}, agency, version)
         return self._get_first(self._client.conceptscheme, id, **kwargs)
     
-    #def getDataStructure(self, id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.DataStructure:
-    #    kwargs = self._set_kwargs({"attr": "datastructure"}, agency, version)
-    #    return self._get_first(self._client.datastructure, id, **kwargs)
-    
-    def listCodelists(self, id: str, agency:str = 'all', version:str = 'all') -> list[sdmx.model.common.Codelist]:
-         return self._get_list(self._client.codelist, id, agency_id=agency, version=version, attr="codelist")
-    
-    def listConceptSchemes(self, id:Optional[str], agency:str = 'all', version:str = 'all') -> list[sdmx.model.common.ConceptScheme]:
-        return self._get_list(self._client.conceptscheme, id, agency_id=agency, version=version, attr="concept_scheme")
-    
-    #def listDataStructures(self, id:Optional[str], agency:str = 'all', version:str = 'all') -> list[sdmx.model.common.Structure]:
-    #    return self._get_list(self._client.datastructure, id, agency_id=agency, version=version, attr="datastructure")
+    def getDataStructure(self, id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.DataStructure:
+        kwargs = self._set_kwargs({"attr": "structure"}, agency, version)
+        return self._get_first(self._client.datastructure, id, **kwargs)
+      
+    def get_data(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None, key: str = 'all', params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
+        params = params or {}
+        kw = {}
+        if agency is not None:
+            kw["provider"] = agency
+        if version is not None:
+            kw["version"] = version
+
+        msg = self._call(self._client.data, resource_id=datasetID, key=key, params=params, **kw)
+        df = sdmx.to_pandas(msg).reset_index()
+
+        if convert_dates and not df.empty and "TIME_PERIOD" in df.columns:
+            if len(df) > 0:
+                df = convert_time_period_auto(df, time_col="TIME_PERIOD", out_col="date")
+        return df
