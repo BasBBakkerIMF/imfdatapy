@@ -178,15 +178,14 @@ class IMFData:
         kwargs = self._set_kwargs({"attr": "structure"}, agency, version)
         return self._get_first(self._client.datastructure, id, **kwargs)
       
-    def get_data(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None, key: str = 'all', params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
+    def get_data(self, datasetID: str, agency:Optional[str] = None, key: str = 'all', params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
+        # TODO Version is not passed, this is an SDMX1 limitation 
         params = params or {}
-        kw = {}
+        kwargs = {}
         if agency is not None:
-            kw["provider"] = agency
-        if version is not None:
-            kw["version"] = version
+            kwargs["provider"] = agency
 
-        msg = self._call(self._client.data, resource_id=datasetID, key=key, params=params, **kw)
+        msg = self._call(self._client.get, resource_id=datasetID, resource_type = 'data', key=key, params=params, **kwargs)
         df = sdmx.to_pandas(msg).reset_index()
 
         if convert_dates and not df.empty and "TIME_PERIOD" in df.columns:

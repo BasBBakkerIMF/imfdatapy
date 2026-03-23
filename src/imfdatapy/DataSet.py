@@ -180,4 +180,9 @@ class DataSet:
         return make_env(self._get_codelist(codelist_id))
 
     def get_data(self, key: str, params: Optional[dict] = None, *, convert_dates: bool = True) -> pd.DataFrame:
-        return self.connection.get_data(self.datasetID, self.agencyID, self.version, key=key, params=params, convert_dates=convert_dates)
+        # TODO Version is not passed, this is an SDMX1 limitation 
+        return self.connection.get_data(datasetID=self.datasetID, 
+                                        agency=self.agencyID, 
+                                        key=key, 
+                                        params=params, 
+                                        convert_dates=convert_dates)
