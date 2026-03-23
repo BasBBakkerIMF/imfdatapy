@@ -179,7 +179,9 @@ class IMFData:
         return self._get_first(self._client.datastructure, id, **kwargs)
       
     def get_data(self, datasetID: str, agency:Optional[str] = None, key: str = 'all', params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
-        # TODO Version is not passed, this is an SDMX1 limitation 
+        # TODO SDMX 2.1 does not suport version in URL, we need to switch to use SDMX 3.0 cliento be able to pass version. To do 
+        #      this we need to look at the SDMX 3.0 functionality implemented in SDMX1 and make sure we have coverage for what we 
+        #      are doing.
         params = params or {}
         kwargs = {}
         if agency is not None:
