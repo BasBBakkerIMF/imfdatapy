@@ -98,19 +98,20 @@ def convert_time_period_auto(df, time_col: str = "TIME_PERIOD", out_col: str = "
 
 class DataSet:
 
-    __slots__ = ["datasetID", "agencyID", "version", "dataflow", "connection"]
+    __slots__ = ["datasetID", "agencyID", "version", "dataflow", "connection", "msg"]
 
-    def __init__(self, dataflow: sdmx.model.common.Dataflow, connection):
-        self.datasetID = dataflow.id
-        self.agencyID = dataflow.maintainer.id
-        self.version = dataflow.version
-        self.dataflow = dataflow
-        self.connection = connection # TODO: make sure this isn't a copy
+    def __init__(self, msg: sdmx.message.Message, connection):
+        self.msg = msg
+        self.dataflow = msg.dataflow[0]
+        self.datasetID = self.dataflow.id
+        self.agencyID = self.dataflow.maintainer.id
+        self.version = self.dataflow.version
+        self.connection = connection
     
     #@cached_property
     def _dimensions(self) -> List[Tuple[Optional[str], str]]:
         rows = []
-        for dim in self.dataflow.dataflow[self.datasetID].structure.dimensions.components:
+        for dim in self.dataflow.structure.dimensions.components:
             conceptIdentity = dim.concept_identity
             codelist = conceptIdentity.core_representation.enumerated
             if codelist is not None:
@@ -143,7 +144,7 @@ class DataSet:
                     "version": cl.version,
                     "n_codes": len(cl),
             }
-            for cl in self.dataflow.codelist.values()
+            for cl in self.msg.codelist.values()
         ]
         return pd.DataFrame(rows, columns=["codelist_id", "name", "version", "n_codes"])
     
@@ -154,7 +155,7 @@ class DataSet:
         code_id, name, description
         """
         try:
-            cl = self.dataflow.codelist[codelist_id]
+            cl = self.msg.codelist[codelist_id]
         except KeyError:
             raise ValueError(f"Codelist '{codelist_id}' not found.")
         rows = []
