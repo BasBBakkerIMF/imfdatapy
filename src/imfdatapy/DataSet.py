@@ -180,9 +180,9 @@ class DataSet:
         return make_env(self._get_codelist(codelist_id))
 
     def get_data(self, key: str, params: Optional[dict] = None, *, convert_dates: bool = True) -> pd.DataFrame:
-        # TODO Pass version when possible
         return self.connection.get_data(datasetID=self.datasetID, 
-                                        agency=self.agencyID, 
+                                        agency=self.agencyID,
+                                        version=self.version, 
                                         key=key,
                                         params=params, 
                                         convert_dates=convert_dates)

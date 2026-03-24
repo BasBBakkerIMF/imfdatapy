@@ -192,21 +192,15 @@ class IMFData:
         kwargs = self._set_kwargs({"attr": "structure"}, agency, version)
         return self._get_first(self._client.datastructure, id, **kwargs)
       
-    def get_data(self, datasetID: str, agency:Optional[str] = None, key: str = 'all',params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
-        # TODO SDMX 2.1 does not suport version in URL, we need to switch to use SDMX 3.0 cliento be able to pass version. To do 
-        #      this we need to look at the SDMX 3.0 functionality implemented in SDMX1 and make sure we have coverage for what we 
-        #      are doing.
-
-        # TODO Make sure this works properly when same ID represented under 2 agencies.
+    def get_data(self, datasetID: str, agency:Optional[str] = None, version:Optional[str] = None, key: str = 'all',params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
         params = params or {}
-        if agency is not None:
-            params["provider"] = agency
+        flowRef = ",".join(x for x in (agency, datasetID, version) if x is not None)
 
         logger = logging.getLogger("sdmx.reader.xml.v21")
         filter_obj = IgnoreStructureWarning()
         logger.addFilter(filter_obj)
         try:
-            msg = self._call(self._client.get, resource_id=datasetID, resource_type='data', key=key, params=params)
+            msg = self._call(self._client.get, resource_id=flowRef, resource_type='data', key=key, params=params)
         finally:
             logger.removeFilter(filter_obj)
 
