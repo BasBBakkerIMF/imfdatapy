@@ -161,10 +161,16 @@ class IMFData:
         return self._list_to_pandas(self._get_list(self._client.datastructure, id, agency_id=agency, version=version, attr="structure"))
 
     def getDataset(self, id: str, agency:Optional[str] = None, version:Optional[str] = None) -> DataSet:
-        kwargs = self._set_kwargs({}, agency, version)
-        #dataflow = self._get_first(self._client.dataflow, id, **kwargs)
-        msg = self._client.dataflow(id, **kwargs)
-        return DataSet(msg, connection = self)
+        
+        kw = {}
+        if agency is not None:
+            kw["agency_id"] = agency
+        if version is not None:
+            kw["version"] = version
+
+        msg = self._call(self._client.dataflow, id, **kw)
+        return DataSet(msg, self)
+
 
     def getCodelist(self: dict[str], id: str, agency:Optional[str] = None, version:Optional[str] = None) -> sdmx.model.common.Codelist:
         kwargs = self._set_kwargs({"attr": "codelist"}, agency, version)
