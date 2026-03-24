@@ -183,6 +183,6 @@ class DataSet:
         # TODO Pass version when possible
         return self.connection.get_data(datasetID=self.datasetID, 
                                         agency=self.agencyID, 
-                                        key=key, 
+                                        key=key,
                                         params=params, 
                                         convert_dates=convert_dates)

@@ -2,15 +2,23 @@ from __future__ import annotations
 
 from typing import Optional
 
+import logging
 import pandas as pd
 import sdmx
 from sdmx.source.imf_data import Source as IMFDataSource
+
+
 
 from .TokenProvider import TokenProvider
 from .DataSet import DataSet, convert_time_period_auto
 
 # Cache classes so repeated calls for the same workspace reuse the same class object
 _SOURCE_CLASS_CACHE: dict[str, type] = {}
+
+class IgnoreStructureWarning(logging.Filter):
+    def filter(self, record):
+        # Return False to hide the record if it contains this specific text
+        return "got no structure" not in record.getMessage()
 
 def _make_imf_datastudio_source(workspace: str):
     """
@@ -184,18 +192,25 @@ class IMFData:
         kwargs = self._set_kwargs({"attr": "structure"}, agency, version)
         return self._get_first(self._client.datastructure, id, **kwargs)
       
-    def get_data(self, datasetID: str, agency:Optional[str] = None, key: str = 'all', params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
+    def get_data(self, datasetID: str, agency:Optional[str] = None, key: str = 'all',params: Optional[dict] = None, *, convert_dates: bool = True,) -> pd.DataFrame:
         # TODO SDMX 2.1 does not suport version in URL, we need to switch to use SDMX 3.0 cliento be able to pass version. To do 
         #      this we need to look at the SDMX 3.0 functionality implemented in SDMX1 and make sure we have coverage for what we 
         #      are doing.
+
+        # TODO Make sure this works properly when same ID represented under 2 agencies.
         params = params or {}
-        kwargs = {}
         if agency is not None:
-            kwargs["provider"] = agency
+            params["provider"] = agency
 
-        msg = self._call(self._client.get, resource_id=datasetID, resource_type = 'data', key=key, params=params, **kwargs)
+        logger = logging.getLogger("sdmx.reader.xml.v21")
+        filter_obj = IgnoreStructureWarning()
+        logger.addFilter(filter_obj)
+        try:
+            msg = self._call(self._client.get, resource_id=datasetID, resource_type='data', key=key, params=params)
+        finally:
+            logger.removeFilter(filter_obj)
+
         df = sdmx.to_pandas(msg).reset_index()
-
         if convert_dates and not df.empty and "TIME_PERIOD" in df.columns:
             if len(df) > 0:
                 df = convert_time_period_auto(df, time_col="TIME_PERIOD", out_col="date")
